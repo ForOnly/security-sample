@@ -10,4 +10,4 @@
 ### 文档
 
 - [spring-security-sample文档总结](./doc/spring-security-sample/readme.md)
-- [spring-authorization-server-sample文档总结]((./doc/spring-authorization-server-sample/readme.md))
+- [spring-authorization-server-sample文档总结](./doc/spring-authorization-server-sample/readme.md)
