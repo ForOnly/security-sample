@@ -3,9 +3,9 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.foronly.sample</groupId>
-    <artifactId>security_sample</artifactId>
+    <artifactId>security-sample</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>security_sample</name>
+    <name>security-sample</name>
     <packaging>pom</packaging>
 
     <description>各安全框架的分析案例</description>
