@@ -19,7 +19,9 @@
 
     <modules>
         <module>spring-security-sample</module>
+        <module>spring-authorization-server-sample</module>
     </modules>
+
     <dependencies>
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -57,9 +59,9 @@
     </dependencyManagement>
     <build>
         <resources>
-            <resource>
-                <directory>doc</directory>
-            </resource>
+            <!--<resource>-->
+            <!--<directory>doc</directory>-->
+            <!--</resource>-->
             <resource>
                 <directory>src/main/resources</directory>
                 <filtering>true</filtering>
