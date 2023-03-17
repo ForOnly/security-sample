@@ -2,6 +2,18 @@
 
 ## 理解spring security中的原理
 
+### spring-security的请求拦截早于DispatcherServlet
+在spring-security中，请求一般会先经过SecurityFilterProxy的处理后，才会来到DispatcherServlet进行请求的servlet映射
+
+### spring-security默认的`/login`接口
+
+- /login GET 
+  
+  这个接口用于请求登录页面，生成页面的逻辑在DefaultLoginPageConfigurer中，生成页面后，会立即响应请求！
+- /login POST
+  
+    这个请求用于spring-security的表单登录，最终被UsernamePasswordAuthenticationFilter进行拦截处理.
+
 ### 默认过滤器链和默认使用的过滤器
 
 在spring security中，存在一条默认的过滤器链，当开发者未自定义过滤器链时，spring security会启用这条默认的过滤器链，
