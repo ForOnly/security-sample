@@ -33,7 +33,7 @@ import java.util.UUID;
 
 // @Configuration
 //自动注册了一个AuthorizationServerSettings, 为授权服务器提供最小的默认配置
-@Import(OAuth2AuthorizationServerConfiguration.class)
+// @Import(OAuth2AuthorizationServerConfiguration.class)
 public class MinimalDefaultConfig {
 
 	@Bean

@@ -21,6 +21,8 @@
 
     <modules>
         <module>authorization-server</module>
+        <module>authorization-client</module>
+        <module>authorization-uaa</module>
     </modules>
 
 </project>

@@ -46,7 +46,7 @@ import java.util.UUID;
  */
 
 
-@Configuration
+// @Configuration
 public class DefaultAuthorizationConfig {
 
 	/**
