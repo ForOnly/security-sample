@@ -25,13 +25,16 @@
 ### spring-security如何实现在IOC中管理Filter的生命周期
 
 Spring Security对Servlet的支持是基于Servlet过滤器的，先看一下过滤器的一般作用。
+
 ![filterchain](./images/filterchain.png)
 
 Spring提供了一个名为`DelegatingFilterProxy`的Filter实现，允许在Servlet容器的生命周期和Spring的`ApplicationContext`之间建立桥梁。
 Servlet容器允许通过使用自己的标准来注册Filter实例，但它不知道Spring定义的Bean。你可以通过标准的Servlet容器机制来注册`DelegatingFilterProxy`
 ，
 但将所有的工作委托给实现了Filter的Spring Bean.
+
 ![delegatingfilterproxy](./images/delegatingfilterproxy.png)
+
 `DelegatingFilterProxy`从`ApplicationContext`查找Filter Bean，然后调用Filter Bean。
 下面的列表显示了`DelegatingFilterProxy`的伪代码：
 
@@ -51,9 +54,11 @@ public void doFilter(ServletRequest request,ServletResponse response,FilterChain
 Spring Security的Servlet支持包含在`FilterChainProxy`中。`FilterChainProxy`是Spring
 Security提供的一个特殊的Filter，允许通过`SecurityFilterChain`委托给许多Filter实例。
 由于`FilterChainProxy`是一个Bean，它通常被包裹在`DelegatingFilterProxy`中。
+
 ![filterchainproxy](./images/filterchainproxy.png)
 
 SecurityFilterChain被FilterChainProxy用来确定当前请求应该调用哪些Spring安全过滤器实例。
+
 ![securityfilterchain](./images/securityfilterchain.png)
 
 `SecurityFilterChain`中的安全过滤器通常是Bean，但它们是用`FilterChainProxy`而不是`DelegatingFilterProxy`注册的。
@@ -76,6 +81,7 @@ FilterChainProxy是Spring Security使用的核心，它可以执行一些不被�
 `ExceptionTranslationFilter`允许将`AccessDeniedException`和`AuthenticationException`转换成HTTP响应。
 
 ExceptionTranslationFilter作为安全过滤器之一被插入到FilterChainProxy中。
+
 ![exceptiontranslationfilter](./images/exceptiontranslationfilter.png)
 
 **注：`AuthenticationEntryPoint`用于向客户端请求凭证。例如，它可以重定向到一个登录页面或发送一个WWW-Authenticate头。**
