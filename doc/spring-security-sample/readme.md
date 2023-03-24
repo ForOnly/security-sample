@@ -73,8 +73,8 @@ FilterChainProxy是Spring Security使用的核心，它可以执行一些不被�
 此外，它在确定何时应该调用`SecurityFilterChain`方面提供了更多的灵活性。在Servlet容器中，Filter实例的调用仅基于URL。
 然而，`FilterChainProxy`可以通过使用RequestMatcher接口，根据`HttpServletRequest`中的任何内容确定调用。
 
-在多个`SecurityFilterChain`图中，`FilterChainProxy`决定应该使用哪个`SecurityFilterChain`。**_
-只有第一个匹配的`SecurityFilterChain`被调用_**。
+在多个`SecurityFilterChain`图中，`FilterChainProxy`决定应该使用哪个`SecurityFilterChain`。
+**_只有第一个匹配的`SecurityFilterChain`被调用_**。
 
 ### 处理安全异常
 
@@ -153,14 +153,166 @@ SecurityFilterChain springSecurity(HttpSecurity http)throws Exception{
 		}
 ```
 
+### AbstractAuthenticationProcessingFilter
+
+`AbstractAuthenticationProcessingFilter`被用作验证用户凭证的基础过滤器。
+在认证凭证之前，Spring Security通常通过使用`AuthenticationEntryPoint`来请求凭证。
+接下来，`AbstractAuthenticationProcessingFilter`可以对提交给它的任何认证请求进行认证。
+
+![abstractauthenticationprocessingfilter](./images/abstractauthenticationprocessingfilter.png)
+
+1. 当用户提交他们的证书时，`AbstractAuthenticationProcessingFilter`会从`HttpServletRequest`
+   中创建一个要认证的`Authentication`。
+   创建的认证的类型取决于`AbstractAuthenticationProcessingFilter`的子类。
+   例如，`UsernamePasswordAuthenticationFilter`从`HttpServletRequest`
+   中提交的用户名和密码创建一个`UsernamePasswordAuthenticationToken`。
+2. 接下来，Authentication被传入`AuthenticationManager`，以进行认证。
+3. 如果认证失败，则为失败。
+
+- `SecurityContextHolder`被清除掉。
+- `RememberMeServices.loginFail`被调用。如果没有配置remember me，这将是一个无用功。请参阅rememberme软件包。
+- `AuthenticationFailureHandler`被调用。参见`AuthenticationFailureHandler`接口。
+
+4. 如果认证成功，则为成功。
+
+- `SessionAuthenticationStrategy`被通知有新的登录。参见`SessionAuthenticationStrategy`接口。
+- 认证被设置在 `SecurityContextHolder` 上。后来，`SecurityContextPersistenceFilter`将`SecurityContext`保存到HttpSession中。请参阅
+  `SecurityContextPersistenceFilter `类。
+- `RememberMeServices.loginSuccess`被调用。如果没有配置remember me，这个操作跳过。
+- `ApplicationEventPublisher`发布了一个`InteractiveAuthenticationSuccessEvent`。
+- `AuthenticationSuccessHandler`被调用。参见`AuthenticationSuccessHandler`接口。
+
+### Form Login
+
+Spring Security提供了对通过HTML表单提供用户名和密码的支持。接下来将详细介绍基于表单的认证在Spring Security中如何工作。
+本段研究了基于表单的登录在Spring Security中是如何工作的。首先，我们看到用户是如何被重定向到登录表单的：
+
+![loginurlauthenticationentrypoint](./images/loginurlauthenticationentrypoint.png)
+
+上面的图建立在SecurityFilterChain的流程上。
+
+1. 首先，一个用户向其未被授权的资源（/private）发出一个未经认证的请求。
+2. Spring Security的`FilterSecurityInterceptor`通过抛出一个`AccessDeniedException`来表明未经认证的请求被拒绝了。
+3. 由于用户没有被认证，`ExceptionTranslationFilter`启动了开始认证，并通过配置的`AuthenticationEntryPoint`发送一个重定向到登录页面。
+   在大多数情况下，`AuthenticationEntryPoint是LoginUrlAuthenticationEntryPoint`的一个实例。
+4. 浏览器请求进入它被重定向的登录页面。
+5. 应用程序中的某些东西，必须呈现登录页面。
+
+当用户名和密码被提交后，`UsernamePasswordAuthenticationFilter`会对用户名和密码进行认证。
+`UsernamePasswordAuthenticationFilter`扩展了`AbstractAuthenticationProcessingFilter`，所以下面的图看起来应该很相似：
+
+![usernamepasswordauthenticationfilter](./images/usernamepasswordauthenticationfilter.png)
+
+上面的图建立在SecurityFilterChain的流程上。
+
+1. 当用户提交他们的用户名和密码时，`UsernamePasswordAuthenticationFilter`通过从`HttpServletRequest`实例中提取用户名和密码，
+   创建一个`UsernamePasswordAuthenticationToken`，这是一种认证类型。
+2. 接下来，`UsernamePasswordAuthenticationToken`被传入`AuthenticationManager`实例，以进行认证。`AuthenticationManager`
+   的细节取决于用户信息的存储方式。
+3. 如果认证失败，进入失败处理流程:
+
+- `SecurityContextHolder`被清除掉了。
+- `RememberMeServices.loginFail`被调用。如果没有配置remember me，这个操作跳过。参见`RememberMeServices`接口。
+- `AuthenticationFailureHandler`被调用。参见`AuthenticationFailureHandler`类。
+
+4. 如果认证成功，进入认证成功处理流程：
+
+- `SessionAuthenticationStrategy`被通知有新的登录。参见`SessionAuthenticationStrategy`接口。
+- 认证是在 `SecurityContextHolder` 上设置的。请参阅 Javadoc 中的 `SecurityContextPersistenceFilter` 类。
+- `RememberMeServices.loginSuccess`被调用。如果没有配置remember me，这个操作跳过。参见`RememberMeServices`接口。
+- `ApplicationEventPublisher`发布了一个`InteractiveAuthenticationSuccessEvent`。
+- `AuthenticationSuccessHandler`被调用。通常，这是一个`SimpleUrlAuthenticationSuccessHandler`
+  ，当我们重定向到登录页面时，它会重定向到由`ExceptionTranslationFilter`保存的请求。
+
+默认情况下，Spring Security表单登录被启用。然而，只要提供任何基于Servlet的配置，就必须明确提供基于表单的登录。下面的例子显示了一个最小的、明确的Java配置：
+
+```java
+public SecurityFilterChain filterChain(HttpSecurity http){
+		http
+		.formLogin(withDefaults());
+		// ...
+		}
+```
+
+在前面的配置中，Spring Security渲染了一个默认的登录页面。大多数生产应用需要一个自定义的登录表单。
+下面的配置演示了如何提供一个自定义的登录表单：
+
+```java
+public SecurityFilterChain filterChain(HttpSecurity http){
+		http
+		.formLogin(form->form
+		.loginPage("/login")
+		.permitAll()
+		);
+		// ...
+		}
+```
+
+当登录页面在Spring Security配置中被指定时，你要负责渲染该页面。
+下面的Thymeleaf模板产生一个符合/login.的登录页面的HTML登录表单：
+
+```xml
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="https://www.thymeleaf.org">
+    <head>
+        <title>Please Log In</title>
+    </head>
+    <body>
+        <h1>Please Log In</h1>
+        <div th:if="${param.error}">
+            Invalid username and password.
+        </div>
+        <div th:if="${param.logout}">
+            You have been logged out.
+        </div>
+        <form th:action="@{/login}" method="post">
+            <div>
+                <input type="text" name="username" placeholder="Username"/>
+            </div>
+            <div>
+                <input type="password" name="password" placeholder="Password"/>
+            </div>
+            <input type="submit" value="Log in"/>
+        </form>
+    </body>
+</html>
+```
+
+如果你使用Spring MVC，你需要一个控制器，将GET /login映射到我们创建的登录模板。
+下面的例子展示了一个最小的LoginController：
+
+```java
+
+@Controller
+public class LoginController {
+	@GetMapping("/login")
+	public String login() {
+		return "login";
+	}
+}
+```
+
 ### spring-security默认的`/login`接口
 
 - /login GET
 
-  这个接口用于请求登录页面，生成页面的逻辑在DefaultLoginPageConfigurer中，生成页面后，会立即响应请求！
+  这个接口用于请求登录页面，生成页面的逻辑在`DefaultLoginPageConfigurer`中，生成页面后，会立即响应请求！
 - /login POST
 
-  这个请求用于spring-security的表单登录，最终被UsernamePasswordAuthenticationFilter进行拦截处理.
+  这个请求用于spring-security的表单登录，最终被`UsernamePasswordAuthenticationFilter`进行拦截处理.
+
+### DaoAuthenticationProvider
+
+DaoAuthenticationProvider是一个AuthenticationProvider的实现，它使用UserDetailsService和PasswordEncoder来验证一个用户名和密码。
+
+![daoauthenticationprovider](./images/daoauthenticationprovider.png)
+
+1. 读取用户名和密码部分的认证Filter将UsernamePasswordAuthenticationToken传递给AuthenticationManager，它由ProviderManager实现。
+2. ProviderManager被配置为使用一个DaoAuthenticationProvider类型的AuthenticationProvider。
+3. DaoAuthenticationProvider从UserDetailsService中查找UserDetails。
+4. DaoAuthenticationProvider使用PasswordEncoder来验证上一步返回的UserDetails上的密码。
+5. 当认证成功时，返回的认证是UsernamePasswordAuthenticationToken类型的，并且有一个委托人是由配置的UserDetailsService返回的UserDetails。
+   最终，返回的UsernamePasswordAuthenticationToken被认证过滤器设置在SecurityContextHolder上。
 
 ### 默认过滤器链和默认使用的过滤器
 
@@ -221,9 +373,25 @@ public class SecurityConfiguration {
 }
 ```
 
+- 自定义`UserDetailsService`的实现
+  例如，假设`CustomUserDetailsService`实现了`UserDetailsService`，下面的列表就可以自定义认证：
+
+```java
+
+@Configuration
+public class SecurityConfiguration {
+	@Bean
+	CustomUserDetailsService customUserDetailsService() {
+		return new CustomUserDetailsService();
+	}
+}
+```
+
+**_注：只有在`AuthenticationManagerBuilder`没有被填充并且没有定义`AuthenticationProvider`Bean的情况下才会使用。_**
+
 ### 配置WebSecurity
 
-推荐的做法是注册一个WebSecurityCustomizer 实例bean：
+推荐的做法是注册一个`WebSecurityCustomizer` 实例bean：
 
 ```java
 
