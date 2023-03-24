@@ -16,11 +16,10 @@
 
 ### spring-security的请求拦截早于DispatcherServlet
 
-在spring-security中，请求一般会先经过`SecurityFilterProxy`的处理后，才会来到`DispatcherServlet`进行请求的servlet映射.
-但此时可以做到：
-
-- 防止下游的Filter实例或Servlet被调用。在这种情况下，Filter通常会写入`HttpServletResponse`。
-- 修改下游的Filter实例和Servlet所使用的`HttpServletRequest`或`HttpServletResponse`。
+- 在spring-security中，请求一般会先经过`SecurityFilterProxy`的处理后，才会来到`DispatcherServlet`进行请求的servlet映射.
+  但此时可以做到：
+    - 防止下游的Filter实例或Servlet被调用。在这种情况下，Filter通常会写入`HttpServletResponse`。
+    - 修改下游的Filter实例和Servlet所使用的`HttpServletRequest`或`HttpServletResponse`。
 
 ### spring-security如何实现在IOC中管理Filter的生命周期
 
@@ -168,19 +167,18 @@ SecurityFilterChain springSecurity(HttpSecurity http)throws Exception{
    中提交的用户名和密码创建一个`UsernamePasswordAuthenticationToken`。
 2. 接下来，Authentication被传入`AuthenticationManager`，以进行认证。
 3. 如果认证失败，则为失败。
-
-- `SecurityContextHolder`被清除掉。
-- `RememberMeServices.loginFail`被调用。如果没有配置remember me，这将是一个无用功。请参阅rememberme软件包。
-- `AuthenticationFailureHandler`被调用。参见`AuthenticationFailureHandler`接口。
+    - `SecurityContextHolder`被清除掉。
+    - `RememberMeServices.loginFail`被调用。如果没有配置remember me，这将是一个无用功。请参阅rememberme软件包。
+    - `AuthenticationFailureHandler`被调用。参见`AuthenticationFailureHandler`接口。
 
 4. 如果认证成功，则为成功。
-
-- `SessionAuthenticationStrategy`被通知有新的登录。参见`SessionAuthenticationStrategy`接口。
-- 认证被设置在 `SecurityContextHolder` 上。后来，`SecurityContextPersistenceFilter`将`SecurityContext`保存到HttpSession中。请参阅
-  `SecurityContextPersistenceFilter `类。
-- `RememberMeServices.loginSuccess`被调用。如果没有配置remember me，这个操作跳过。
-- `ApplicationEventPublisher`发布了一个`InteractiveAuthenticationSuccessEvent`。
-- `AuthenticationSuccessHandler`被调用。参见`AuthenticationSuccessHandler`接口。
+    - `SessionAuthenticationStrategy`被通知有新的登录。参见`SessionAuthenticationStrategy`接口。
+    - 认证被设置在 `SecurityContextHolder` 上。后来，`SecurityContextPersistenceFilter`将`SecurityContext`
+      保存到HttpSession中。请参阅
+      `SecurityContextPersistenceFilter `类。
+    - `RememberMeServices.loginSuccess`被调用。如果没有配置remember me，这个操作跳过。
+    - `ApplicationEventPublisher`发布了一个`InteractiveAuthenticationSuccessEvent`。
+    - `AuthenticationSuccessHandler`被调用。参见`AuthenticationSuccessHandler`接口。
 
 ### Form Login
 
@@ -210,19 +208,17 @@ Spring Security提供了对通过HTML表单提供用户名和密码的支持。�
 2. 接下来，`UsernamePasswordAuthenticationToken`被传入`AuthenticationManager`实例，以进行认证。`AuthenticationManager`
    的细节取决于用户信息的存储方式。
 3. 如果认证失败，进入失败处理流程:
-
-- `SecurityContextHolder`被清除掉了。
-- `RememberMeServices.loginFail`被调用。如果没有配置remember me，这个操作跳过。参见`RememberMeServices`接口。
-- `AuthenticationFailureHandler`被调用。参见`AuthenticationFailureHandler`类。
+    - `SecurityContextHolder`被清除掉了。
+    - `RememberMeServices.loginFail`被调用。如果没有配置remember me，这个操作跳过。参见`RememberMeServices`接口。
+    - `AuthenticationFailureHandler`被调用。参见`AuthenticationFailureHandler`类。
 
 4. 如果认证成功，进入认证成功处理流程：
-
-- `SessionAuthenticationStrategy`被通知有新的登录。参见`SessionAuthenticationStrategy`接口。
-- 认证是在 `SecurityContextHolder` 上设置的。请参阅 Javadoc 中的 `SecurityContextPersistenceFilter` 类。
-- `RememberMeServices.loginSuccess`被调用。如果没有配置remember me，这个操作跳过。参见`RememberMeServices`接口。
-- `ApplicationEventPublisher`发布了一个`InteractiveAuthenticationSuccessEvent`。
-- `AuthenticationSuccessHandler`被调用。通常，这是一个`SimpleUrlAuthenticationSuccessHandler`
-  ，当我们重定向到登录页面时，它会重定向到由`ExceptionTranslationFilter`保存的请求。
+    - `SessionAuthenticationStrategy`被通知有新的登录。参见`SessionAuthenticationStrategy`接口。
+    - 认证是在 `SecurityContextHolder` 上设置的。请参阅 Javadoc 中的 `SecurityContextPersistenceFilter` 类。
+    - `RememberMeServices.loginSuccess`被调用。如果没有配置remember me，这个操作跳过。参见`RememberMeServices`接口。
+    - `ApplicationEventPublisher`发布了一个`InteractiveAuthenticationSuccessEvent`。
+    - `AuthenticationSuccessHandler`被调用。通常，这是一个`SimpleUrlAuthenticationSuccessHandler`
+      ，当我们重定向到登录页面时，它会重定向到由`ExceptionTranslationFilter`保存的请求。
 
 默认情况下，Spring Security表单登录被启用。然而，只要提供任何基于Servlet的配置，就必须明确提供基于表单的登录。下面的例子显示了一个最小的、明确的Java配置：
 
@@ -403,5 +399,302 @@ public class SecurityConfiguration {
 		return (web) -> web.ignoring().antMatchers("/ignore1", "/ignore2");
 	}
 
+}
+```
+
+## OAUTH 2.0
+
+介绍spring-security对oauth 2.0 的支持
+
+### OAuth 2.0 Resource Server
+
+- Spring Security支持通过使用两种形式的OAuth 2.0承载令牌来保护端点：
+    - JWT
+    - 不透明的令牌
+
+在应用程序将其权限管理委托给授权服务器（例如，Okta或Ping Identity）的情况下，这很方便。资源服务器可以查询这个授权服务器来授权请求。
+本节详细介绍了Spring Security如何提供对OAuth 2.0承载令牌的支持。
+
+先了解Bearer Token认证在Spring Security中是如何工作的。
+首先，与基本认证一样，WWW-Authenticate头被送回给未认证的客户端：
+
+![bearerauthenticationentrypoint](./images/bearerauthenticationentrypoint.png)
+
+上图建立在SecurityFilterChain的流程之上：
+
+1. 首先，用户向`/private`资源发出未经认证的请求，而该用户没有得到授权。
+2. Spring Security的`FilterSecurityInterceptor`通过抛出一个`AccessDeniedException`来表明未经认证的请求被拒绝了。
+3. 由于用户没有经过认证，`ExceptionTranslationFilter`启动了开始认证。配置的`AuthenticationEntryPoint`
+   是`BearerTokenAuthenticationEntryPoint`的一个实例，
+   它发送一个`WWW-Authenticate`头。 `RequestCache`通常是一个`NullRequestCache`，它不保存请求，因为客户端能够重放它最初请求的请求。
+
+当客户端收到`WWW-Authenticate：Bearer header`时，它知道它应该用一个承载令牌重试。
+下面的图片显示了正在处理的承载令牌的流程：
+
+![bearertokenauthenticationfilter](./images/bearertokenauthenticationfilter.png)
+
+上图建立在SecurityFilterChain的流程之上：
+
+1. 当用户提交他们的承载令牌时，BearerTokenAuthenticationFilter通过从HttpServletRequest中提取令牌，创建一个BearerTokenAuthenticationToken，这是一种认证类型。
+2. 接下来，`HttpServletRequest`被传递给`AuthenticationManagerResolver`，它选择了`AuthenticationManager`。
+   `BearerTokenAuthenticationToken`被传入`AuthenticationManager`以进行认证。
+   `AuthenticationManager`的细节取决于你配置的是JWT还是opaque token。
+3. 如果认证失败，进入失败处理流程：
+    - `SecurityContextHolder`被清除掉了。
+    - `AuthenticationEntryPoint`被调用以触发`WWW-Authenticate`头的再次发送。
+
+4. 如果认证成功，进入认证成功处理流程：
+    - 认证是在`SecurityContextHolder`上设置的。
+    - `BearerTokenAuthenticationFilter`调用`FilterChain.doFilter(request,response)`来继续执行其余的应用逻辑。
+
+#### OAuth 2.0 Resource Server Opaque Token
+
+- 最小依赖：
+    - spring-security-oauth2-resource-server
+    - oauth2-oidc-sdk
+
+**_除非提供一个自定义的`OpaqueTokenIntrospector`，否则资源服务器将退回到默认的`NimbusOpaqueTokenIntrospector`。_**
+<br>
+<br>
+<br>
+**接下来讲讲不透明令牌是如何工作的：**<br>
+`OpaqueTokenAuthenticationProvider`是一个`AuthenticationProvider`实现，它利用`OpaqueTokenIntrospector`来验证一个不透明的令牌。
+
+![opaquetokenauthenticationprovider](./images/opaquetokenauthenticationprovider.png)
+
+1. 读取承载令牌的认证过滤器将一个承载令牌认证令牌传递给由`ProviderManager`实现的认证管理器。
+2. `ProviderManager`被配置为使用一个`OpaqueTokenAuthenticationProvider`类型的`AuthenticationProvider`。
+3. `OpaqueTokenAuthenticationProvider`使用`OpaqueTokenIntrospector`对不透明令牌进行反省并添加授予的权限。
+   当认证成功时，返回的认证是`BearerTokenAuthentication`类型的，其委托人是由配置的`OpaqueTokenIntrospector`
+   返回的`OAuth2AuthenticatedPrincipal`。
+   最终，返回的`BearerTokenAuthentication`将被认证过滤器设置在`SecurityContextHolder`上。
+   <br>
+   <br>
+   <br>
+
+**接下来讲讲覆盖或取代spring-security中对不透明令牌的自动配置**<br>
+
+有两个@Beans是Spring Boot代表资源服务器生成的。
+第一个是`SecurityFilterChain`，它将应用程序配置为资源服务器。当使用Opaque Token时，这个`SecurityFilterChain`看起来像：
+
+```java
+  // Default Opaque Token Configuration
+@Bean
+public SecurityFilterChain filterChain(HttpSecurity http)throws Exception{
+		http
+		.authorizeHttpRequests(authorize->authorize
+		.anyRequest().authenticated()
+		)
+		.oauth2ResourceServer(OAuth2ResourceServerConfigurer::opaqueToken);
+		return http.build();
+		} 
+```
+
+如果应用程序没有暴露一个`SecurityFilterChain` @Bean，那么Spring Boot将暴露上述默认的一个。
+替换它就像在应用程序中公开该bean一样简单：
+
+```java
+
+@Configuration
+@EnableWebSecurity
+public class MyCustomSecurityConfiguration {
+	@Bean
+	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+		http
+				// 要求任何以/messages/开头的URL的范围为message:read。
+				.authorizeHttpRequests(authorize -> authorize
+						.requestMatchers("/messages/**").hasAuthority("SCOPE_message:read")
+						.anyRequest().authenticated()
+				)
+				// oauth2ResourceServer DSL上的方法将覆盖或取代自动配置。
+				.oauth2ResourceServer(oauth2 -> oauth2
+						.opaqueToken(opaqueToken -> opaqueToken
+								.introspector(myIntrospector())
+						)
+				);
+		return http.build();
+	}
+}
+
+
+```
+
+Spring Boot创建的第二个@Bean是一个`OpaqueTokenIntrospector`，它将String令牌解码为`OAuth2AuthenticatedPrincipal`的验证实例：
+
+```java
+@Bean
+public OpaqueTokenIntrospector introspector(){
+		return new NimbusOpaqueTokenIntrospector(introspectionUri,clientId,clientSecret);
+		}
+```
+
+如果应用程序没有暴露`OpaqueTokenIntrospector` @Bean，那么Spring Boot将暴露上述默认的一个。
+它的配置可以用 `introspectionUri()` 和 `introspectionClientCredentials()` 重写，或用 `introspector()` 替换。
+如果应用程序没有公开`OpaqueTokenAuthenticationConverter` Bean，那么Spring-security将构建`BearerTokenAuthentication`
+
+*使用introspectionUri()*
+
+```java
+
+@Configuration
+@EnableWebSecurity
+public class DirectlyConfiguredIntrospectionUri {
+	@Bean
+	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+		http
+				.authorizeHttpRequests(authorize -> authorize
+						.anyRequest().authenticated()
+				)
+				.oauth2ResourceServer(oauth2 -> oauth2
+						.opaqueToken(opaqueToken -> opaqueToken
+								.introspectionUri("https://idp.example.com/introspect")
+								.introspectionClientCredentials("client", "secret")
+						)
+				);
+		return http.build();
+	}
+}
+```
+
+*使用introspector()*
+比 `introspectionUri()`更强大的是 `introspector()`，它将完全取代 `OpaqueTokenIntrospector` 的任何 Boot 自动配置：
+
+```java
+
+@Configuration
+@EnableWebSecurity
+public class DirectlyConfiguredIntrospector {
+	@Bean
+	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+		http
+				.authorizeHttpRequests(authorize -> authorize
+						.anyRequest().authenticated()
+				)
+				.oauth2ResourceServer(oauth2 -> oauth2
+						.opaqueToken(opaqueToken -> opaqueToken
+								.introspector(myCustomIntrospector())
+						)
+				);
+		return http.build();
+	}
+}
+```
+
+_暴露一个OpaqueTokenIntrospector @Bean的效果与 introspector()相同：_
+
+```java
+@Bean
+public OpaqueTokenIntrospector introspector(){
+		return new NimbusOpaqueTokenIntrospector(introspectionUri,clientId,clientSecret);
+		}
+```
+
+#### OAuth 2.0 Bearer Tokens
+
+你可能需要从一个自定义头中读取承载令牌。
+为了达到这个目的，你可以把`DefaultBearerTokenResolver`作为一个Bean公开，或者把一个实例接入DSL，正如你在下面的例子中看到的那样.
+
+```java
+// Custom Bearer Token Header
+@Bean
+BearerTokenResolver bearerTokenResolver(){
+		DefaultBearerTokenResolver bearerTokenResolver=new DefaultBearerTokenResolver();
+		bearerTokenResolver.setBearerTokenHeaderName(HttpHeaders.PROXY_AUTHORIZATION);
+		return bearerTokenResolver;
+		}
+```
+
+或者，在提供者同时使用自定义头和值的情况下，你可以使用`HeaderBearerTokenResolver`代替。
+或者，你可能希望从表单参数中读取令牌，你可以通过配置`DefaultBearerTokenResolver`来做到这一点:
+
+```java
+// Form Parameter Bearer Token
+DefaultBearerTokenResolver resolver=new DefaultBearerTokenResolver();
+		resolver.setAllowFormEncodedBodyParameter(true);
+		http
+		.oauth2ResourceServer(oauth2->oauth2
+		.bearerTokenResolver(resolver)
+		);
+```
+
+*现在你的资源服务器已经验证了令牌，把它传递给下游服务可能会很方便。
+使用`ServletBearerExchangeFilterFunction`，这很简单，你可以在下面的例子中看到：*
+
+```java
+@Bean
+public WebClient rest(){
+		return WebClient.builder()
+		.filter(new ServletBearerExchangeFilterFunction())
+		.build();
+		}
+```
+
+当上述WebClient被用来执行请求时，Spring Security将查找当前的`Authentication`并提取任何`AbstractOAuth2Token`
+凭证。然后，它将在授权头中传播该令牌。
+比如说：
+
+```java
+this.rest.get()
+		.uri("https://other-service.example.com/endpoint")
+		.retrieve()
+		.bodyToMono(String.class)
+		.block();
+```
+
+将调用`other-service.example.com/endpoint`，为你添加承载令牌授权头。
+
+在你需要覆盖这一行为的地方，只需自己提供头信息即可，就像这样：
+
+```java
+this.rest.get()
+		.uri("https://other-service.example.com/endpoint")
+		.headers(headers->headers.setBearerAuth(overridingToken))
+		.retrieve()
+		.bodyToMono(String.class)
+		.block()
+```
+
+目前没有ServletBearerExchangeFilterFunction的RestTemplate等价物，但你可以用你自己的拦截器很简单地传播请求的承载令牌：
+
+```java
+@Bean
+RestTemplate rest(){
+		RestTemplate rest=new RestTemplate();
+		rest.getInterceptors().add((request,body,execution)->{
+		Authentication authentication=SecurityContextHolder.getContext().getAuthentication();
+		if(authentication==null){
+		return execution.execute(request,body);
+		}
+
+		if(!(authentication.getCredentials()instanceof AbstractOAuth2Token)){
+		return execution.execute(request,body);
+		}
+
+		AbstractOAuth2Token token=(AbstractOAuth2Token)authentication.getCredentials();
+		request.getHeaders().setBearerAuth(token.getTokenValue());
+		return execution.execute(request,body);
+		});
+		return rest;
+		}
+```
+
+与OAuth 2.0授权客户管理器不同的是，如果令牌过期，这个过滤拦截器不会尝试更新令牌。
+要获得这种级别的支持，请使用OAuth 2.0授权客户端管理器创建一个拦截器。
+
+**令牌失效异常**<br>
+一个不记名令牌可能由于一些原因而无效。例如，该令牌可能不再有效。
+在这些情况下，资源服务器会抛出一个`InvalidBearerTokenException`。与其他异常一样，这会导致OAuth 2.0承载令牌的错误响应：
+此外，它被发布为`AuthenticationFailureBadCredentialsEvent`，你可以像这样在你的应用程序中监听它：
+
+```java
+
+@Component
+public class FailureEvents {
+	@EventListener
+	public void onFailure(AuthenticationFailureBadCredentialsEvent badCredentials) {
+		if (badCredentials.getAuthentication() instanceof BearerTokenAuthenticationToken) {
+			// ... handle
+		}
+	}
 }
 ```
