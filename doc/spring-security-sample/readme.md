@@ -698,3 +698,35 @@ public class FailureEvents {
 	}
 }
 ```
+
+### OAuth 2.0 Client
+
+OAuth 2.0客户端功能为OAuth 2.0授权框架中定义的客户端角色提供支持。
+
+`HttpSecurity.oauth2Client()` DSL为定制OAuth 2.0客户端使用的核心组件提供了许多配置选项。
+此外，`HttpSecurity.oauth2Client().authorizationCodeGrant()`可以实现对授权码授予的定制。
+下面的代码显示了`HttpSecurity.oauth2Client()`DSL所提供的完整配置选项：
+
+```java
+// OAuth2 Client Configuration Options
+@Configuration
+@EnableWebSecurity
+public class OAuth2ClientSecurityConfig {
+
+	@Bean
+	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+		http
+				.oauth2Client(oauth2 -> oauth2
+						.clientRegistrationRepository(this.clientRegistrationRepository())
+						.authorizedClientRepository(this.authorizedClientRepository())
+						.authorizedClientService(this.authorizedClientService())
+						.authorizationCodeGrant(codeGrant -> codeGrant
+								.authorizationRequestRepository(this.authorizationRequestRepository())
+								.authorizationRequestResolver(this.authorizationRequestResolver())
+								.accessTokenResponseClient(this.accessTokenResponseClient())
+						)
+				);
+		return http.build();
+	}
+}
+```
