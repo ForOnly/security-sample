@@ -402,6 +402,17 @@ public class SecurityConfiguration {
 }
 ```
 
+### spring-security中`AuthenticationConverter`，`AuthenticationToken`，`AuthenticationFilter`,`AuthenticationProvider`四者之间的关系和流程
+
+1. 用户在客户端提交认证请求。
+2. `AuthenticationConverter`从请求中获取认证信息并将其转换为`Authentication`对象。
+3. `AuthenticationFilter`接收`Authentication`对象并进行进一步处理。
+4. `AuthenticationFilter`将`Authentication`对象交给`AuthenticationProvider`进行认证。
+5. `AuthenticationProvider`接收`Authentication`对象，并尝试进行认证。
+6. 如果认证成功，则`AuthenticationProvider`返回一个被认证的`Authentication`对象。
+7. `AuthenticationFilter`将被认证的`Authentication`对象存储在`SecurityContextHolder`中。
+8. 用户可以在应用程序中使用`SecurityContextHolder`获取认证信息。
+
 ## OAUTH 2.0
 
 介绍spring-security对oauth 2.0 的支持
