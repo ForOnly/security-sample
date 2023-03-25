@@ -12,6 +12,25 @@
 
 [深入理解 WebSecurityConfigurerAdapter【源码篇】](https://wangsong.blog.csdn.net/article/details/107655180)
 
+## spring-security的自动配置类
+
+**_要了解spring-security的原理，可以从这些配置类下手,当引入spring-security的时候，这些类就会自动进行配置_**
+
+spring-security的自动配置类主要有以下几种：
+
+1. `SecurityAutoConfiguration`：启用 Spring Security 的自动配置。当应用中存在 Spring Security 的依赖时，会自动启用此自动配置类，
+   来配置 Spring Security 的默认行为。
+2. `UserDetailsServiceAutoConfiguration`：自动配置 Spring Security 的用户认证相关功能，包括使用内存中的用户、JDBC 认证、LDAP
+   认证等方式。
+3. `SecurityFilterAutoConfiguration`：自动配置 Spring Security 的过滤器，用于保护应用程序的所有请求。它会自动配置 Spring
+   Security 的过滤器链，
+   以确保所有请求都经过正确的安全过滤器。
+4. `OAuth2ClientAutoConfiguration`：自动配置 OAuth2 客户端，用于通过 OAuth2 协议保护应用程序的资源。
+
+除此之外，Spring Security 还提供了一些用于自定义安全配置的注解，如`@EnableWebSecurity`、`@EnableGlobalMethodSecurity`
+、`@EnableOAuth2Sso`等。
+这些注解可以用于激活 Spring Security 的自动配置，并提供了一些自定义配置的选项，以满足不同场景下的安全需求。
+
 ## 理解spring security中的原理
 
 ### spring-security的请求拦截早于DispatcherServlet

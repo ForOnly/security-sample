@@ -1,5 +1,8 @@
 # spring-authorization-server-sample
 
+## 参考资料
+[【自定义 Spring Authorization Server 配置】](http://www.manongjc.com/detail/40-tldpplrrnmrjysv.html)
+
 ## 入门
 
 ### OAuth2AuthorizationServerConfiguration
